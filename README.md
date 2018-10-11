@@ -1,0 +1,10 @@
+# TinkerTech Raspberry Pi board Compass setup
+Bash script for Raspberry Pi Zero an d TinkerTech board Compass.
+
+
+![alt text](https://github.com/robertrau/TinkerTechCompass/raw/master/pictures/TinkerTechBoard1.png "figure 1")
+
+
+
+
+All trademarks are copyright of their respective owners. 
