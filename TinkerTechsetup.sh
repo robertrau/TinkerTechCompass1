@@ -9,10 +9,11 @@
 # Updated: 
 #    Rev.: 1.01
 #      By: Robert S. Rau & Rob F. Rau II
-# Changes: 
+# Changes: Sometimes ping fails the first time, added another ping, logfile was setup too late, moved earlier
 #
 #
-TINKERTECH1SETUPVERSION=1.00
+#
+TINKERTECH1SETUPVERSION=1.01
 #
 # Things to think about
 #
@@ -41,18 +42,19 @@ tput setaf 5        # highlight text magenta
 echo "Set Terminal Scroll-back lines to 4500 to record whole install. Set terminal window to full width of screen for best readability."
 tput setaf 7        # return text to normal
 #
+logFilePath=/var/log/tinkertechinstalllog.txt
 if [[ $EUID > 0 ]]; then
 	echo "Please run using: sudo ./TinkerTechsetup.sh"
     sudo echo "TinkerTech1 Setup: Aborted, not in sudo." $(date +"%A,  %B %e, %Y, %X %Z") >> $logFilePath
     exit
 fi
-logFilePath=/var/log/tinkertechinstalllog.txt
 runlogFilePath=/var/log/tinkertechrunlog.txt
 echo "" >> $logFilePath
 echo "Install started " $(date +"%A,  %B %e, %Y, %X %Z") >> $logFilePath
 echo "TinkerTech1 Setup: Script version" $TINKERTECH1SETUPVERSION >> $logFilePath
 echo "TinkerTech1 Setup: ran from directory:" $mydirectory >> $logFilePath
 whoami >> $logFilePath
+ping -c 1 8.8.8.8
 ping -c 1 8.8.8.8
 if [[ $? > 0 ]]; then
     echo ""
@@ -154,7 +156,7 @@ if [ $GPIO_HALT_NOT_FOUND -eq 1 ]; then
   echo "exit 0" >> /etc/rc.local
   GPIOHALTRES=$(($?+$GPIOHALTRES))
   echo "TinkerTech1 Setup: /etc/rc.local editing for gpio-halt" $HALTGPIOBIT "&: result" $GPIOHALTRES >> $logFilePath
-  cd /home/pi/pifly
+  cd /home/pi/tinkertech
   chown -R pi:pi Adafruit-GPIO-Halt     # because when this script is run with sudo, everything belongs to root, must chown
 else
   echo "TinkerTech1 Setup: gpio-halt already in rc.local" >> $logFilePath
@@ -194,7 +196,7 @@ fi
 #
 # update run log on startup
 sed -i.bak -e "s/exit 0//" /etc/rc.local
-echo 'echo "PiFly booted on " $(date +"%A,  %B %e, %Y, %X %Z") >> /var/log/piflyrunlog.txt' >> /etc/rc.local
+echo 'echo "Raspberry Pi booted on " $(date +"%A,  %B %e, %Y, %X %Z") >> /var/log/tinkertechrunlog.txt' >> /etc/rc.local
 echo "exit 0" >> /etc/rc.local
 #
 #
@@ -204,7 +206,7 @@ echo "exit 0" >> /etc/rc.local
 #
 #  nbfm - narrow band FM - 144MHz transmitter, uses GPIO4
 echo "TinkerTech1 Setup: Starting nbfm setup" >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 if [ -d NBFM ]; then
   cd NBFM
   git pull
@@ -219,14 +221,14 @@ echo "TinkerTech1 Setup: chmod +x TX-CPUTemp.sh: result" $? >> $logFilePath
 echo "TinkerTech1 Setup: Starting gcc -O3 -lm -std=gnu99 -o nbfm nbfm.c &> $logFilePath" >> $logFilePath
 gcc -O3 -lm -std=gnu99 -o nbfm nbfm.c &>> $logFilePath                 # changed from -std=c99 to -std=gnu99, and -o3 to -O3
 echo "TinkerTech1 Setup: gcc -O3 -lm -std=gnu99 -o nbfm nbfm.c &>> $logFilePath: result" $? >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 chown -R pi:pi NBFM     # because when this script is run with sudo, everything belongs to root
 echo "TinkerTech1 Setup: chown -R pi:pi NBFM: result" $? >> $logFilePath
 #
 #
 #  rpitx - able to TX on 440MHz band, uses GPIO18 or GPIO4
 echo "TinkerTech1 Setup: Starting rpitx setup" >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 if [ -d rpitx ]; then
   cd rpitx
   git pull
@@ -240,20 +242,20 @@ fi
 echo "TinkerTech1 Setup: rpitx install: result" $? >> $logFilePath
 #
 # Fetch demo scripts
-cp /home/pi/piflySetupScript/text2RFrpitx.sh .
-echo "TinkerTech1 Setup: cp /home/pi/piflysetupscript/text2RFrpitx.sh .: result" $? >> $logFilePath
-mv /home/pi/piflySetupScript/Demo144-39MHz.sh .
-echo "TinkerTech1 Setup: mv /home/pi/piflysetupscript/Demo144-39MHz.sh .: result" $? >> $logFilePath
-cd /home/pi/pifly
-chown -R pi:pi rpitx     # because when this script is run with sudo, everything belongs to root
-echo "TinkerTech1 Setup: chown -R pi:pi rpitx: result" $? >> $logFilePath
+#cp /home/pi/piflySetupScript/text2RFrpitx.sh .
+#echo "TinkerTech1 Setup: cp /home/pi/piflysetupscript/text2RFrpitx.sh .: result" $? >> $logFilePath
+#mv /home/pi/piflySetupScript/Demo144-39MHz.sh .
+#echo "TinkerTech1 Setup: mv /home/pi/piflysetupscript/Demo144-39MHz.sh .: result" $? >> $logFilePath
+#cd /home/pi/pifly
+#chown -R pi:pi rpitx     # because when this script is run with sudo, everything belongs to root
+#echo "TinkerTech1 Setup: chown -R pi:pi rpitx: result" $? >> $logFilePath
 #
 #
 #
 #
 #  pifm - able to TX on 144MHz band, uses GPIO4
 echo "TinkerTech1 Setup: Starting pifm setup" >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 if [ -d pifm ]; then
   cd pifm
   git pull
@@ -267,12 +269,12 @@ chown pi:pi pifm.cpp     # because when this script is run with sudo, everything
 echo "TinkerTech1 Setup: chown pi:pi pifm.cpp: result" $? >> $logFilePath
 g++ -O3 -o pifm pifm.cpp &>> $logFilePath
 echo "TinkerTech1 Setup: pifm:g++ pifm: result" $? >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 chown -R pi:pi pifm     # because when this script is run with sudo, everything belongs to root
 #
 #
 #  Packet radio modulator. Text to modem .WAV file
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 wget https://raw.githubusercontent.com/km4efp/pifox/master/pifox/pkt2wave
 echo "TinkerTech1 Setup: wget pkt2wave: result" $? >> $logFilePath
 chmod +x pkt2wave
@@ -356,17 +358,15 @@ raspi-gpio get  >> $logFilePath
 ########## 7) IMU (MPS9250) support
 #
 #
-#
-#
 # First, tools to build all this...
-# for libpifly and RTIMULib
+# for RTIMULib
 apt-get -y install cmake
 echo "TinkerTech1 Setup: apt-get -y install cmake: result" $? >> $logFilePath
 #
 #
 # Second, Qt dependancies for demo programs
 #
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 apt-get -y install qt4-dev-tools qt4-bin-dbg qt4-qtconfig qt4-default
 #
 if [ -d RTIMULib2 ]; then
@@ -378,7 +378,7 @@ else
   echo "TinkerTech1 Setup: git clone http://github.com/RTIMULib/RTIMULib2: result" $? >> $logFilePath
   cd RTIMULib2
 fi
-#chown -R pi:pi /home/pi/pifly/RTIMULib2     # because when this script is run with sudo, everything belongs to root
+#chown -R pi:pi /home/pi/tinkertech/RTIMULib2     # because when this script is run with sudo, everything belongs to root
 #
 # build lib
 echo "TinkerTech1 Setup: Starting RTIMULib library install" >> $logFilePath
@@ -392,25 +392,25 @@ make install &>> $logFilePath
 #
 # build demos
 echo "TinkerTech1 Setup: Starting RTIMULib Demos install" >> $logFilePath
-cd /home/pi/pifly/RTIMULib2/Linux/
+cd /home/pi/tinkertech/RTIMULib2/Linux/
 mkdir build
-#chown -R pi:pi /home/pi/pifly/RTIMULib2/
+#chown -R pi:pi /home/pi/tinkertech/RTIMULib2/
 cd build
 cmake ../ &>> $logFilePath
-#chown -R pi:pi /home/pi/pifly/RTIMULib2/
+#chown -R pi:pi /home/pi/tinkertech/RTIMULib2/
 make &>> $logFilePath
-#chown -R pi:pi /home/pi/pifly/RTIMULib2/
+#chown -R pi:pi /home/pi/tinkertech/RTIMULib2/
 make install &>> $logFilePath
 ldconfig
 #
 #
 #
-chown -R pi:pi /home/pi/pifly/RTIMULib2     # because when this script is run with sudo, everything belongs to root
+chown -R pi:pi /home/pi/tinkertech/RTIMULib2     # because when this script is run with sudo, everything belongs to root
 #
 #
 #
-# Now copy the version of RTIMULib.ini for the pifly
-cp /home/pi/piflySetupScript/RTIMULib.ini /home/pi/pifly/RTIMULib2/Linux/build/RTIMULibGL/CMakeFiles
+# Now copy the version of RTIMULib.ini for the tinkertech directory
+cp /home/pi/tinkertech/RTIMULib.ini /home/pi/tinkertech/RTIMULib2/Linux/build/RTIMULibGL/CMakeFiles
 #
 #
 #
@@ -456,13 +456,13 @@ echo "TinkerTech1 Setup: apt-get -y install setserial: result" $? >> $logFilePat
 #
 #
 # Adafruit PCA9685 Python library
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git
 cd Adafruit_Python_PCA9685
 echo "TinkerTech1 Setup: cd Adafruit_Python_PCA9685: result" $? >> $logFilePath
 python setup.py install
 echo "TinkerTech1 Setup: python setup.py install: result" $? >> $logFilePath
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 chown -R pi:pi Adafruit_Python_PCA9685     # because when this script is run with sudo, everything belongs to root
 #
 #
@@ -473,7 +473,7 @@ echo "TinkerTech1 Setup: ~/.bashrc appending for an alias: result" $? >> $logFil
 #
 #
 # Add the gpio man page
-cd /home/pi/pifly
+cd /home/pi/tinkertech
 if [ -d wiringPi ]; then
   cd wiringPi
   git pull
