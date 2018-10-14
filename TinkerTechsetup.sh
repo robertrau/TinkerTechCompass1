@@ -11,12 +11,14 @@
 #      By: Robert S. Rau & Rob F. Rau II
 # Changes: Sometimes ping fails the first time, added another ping, logfile was setup too late, moved earlier
 #
+# Updated: 
+#    Rev.: 1.02
+#      By: Robert S. Rau & Rob F. Rau II
+# Changes: Cleaned up GPIO setup in rc.local. Removed GPS stuff.
 #
 #
-TINKERTECH1SETUPVERSION=1.01
 #
-# Things to think about
-#
+TINKERTECH1SETUPVERSION=1.02
 #
 #
 #
@@ -169,29 +171,6 @@ fi
 #     https://raspberrypi.stackexchange.com/questions/10357/enable-camera-without-raspi-config/14400
 #     https://core-electronics.com.au/tutorials/create-an-installer-script-for-raspberry-pi.html
 #
-#echo "TinkerTech1 Setup: Starting camera setup" >> $logFilePath
-#grep "start_x=1" /boot/config.txt
-#if grep "start_x=1" /boot/config.txt
-#then
-#        echo "TinkerTech1 Setup: Camera already installed" >> $logFilePath
-#else
-#        sed -i "s/start_x=0/start_x=1/g" /boot/config.txt
-#fi
-#
-#
-# If a line containing "gpu_mem" exists
-#if grep -Fq "gpu_mem" $CONFIG
-#then
-	# Replace the line
-#	echo "TinkerTech1 Setup: Modifying gpu_mem"
-#	sed -i "/gpu_mem/c\gpu_mem=128" $CONFIG
-#else
-	# Create the definition
-#	echo "TinkerTech1 Setup: gpu_mem not defined. Creating definition"
-#	echo "gpu_mem=128" >> $CONFIG
-#fi
-#
-#
 #
 #
 # update run log on startup
@@ -282,22 +261,9 @@ chown pi:pi pkt2wave     # because when this script is run with sudo, everything
 #
 #
 #
-#  slow scan TV
-# will add later
-#https://www.element14.com/community/community/raspberry-pi/raspberrypi_projects/blog/2014/01/27/pi-noir-and-catch-santa-challenge--the-dutch-way
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-########## 5) Graphics for Video downlink support
+########## 5) Graphics
 #
 # Python matplotlib
 echo "TinkerTech1 Setup: Starting python-matplotlib setup" >> $logFilePath
@@ -319,31 +285,10 @@ HIGH_CURRENT_OUT_NOT_FOUND=$?
 if [ $HIGH_CURRENT_OUT_NOT_FOUND -eq 1 ]; then
   echo "TinkerTech1 Setup: High current/GPS support not found in rc.local" >> $logFilePath
   sed -i.bak -e "s/^exit 0//" /etc/rc.local   # remove the exit 0 at end (not the one in the comment)
-  echo "gpio -g mode 21 out   # GPS reset to output" >> /etc/rc.local
-  echo "gpio -g write 21 0   # assert GPS reset" >> /etc/rc.local
-  echo "gpio -g mode 17 out   # Fire A output" >> /etc/rc.local
-  echo "gpio -g mode 22 out   # Fire B output" >> /etc/rc.local
-  echo "gpio -g mode 23 out   # Fire C output" >> /etc/rc.local
-  echo "gpio -g mode 24 out   # Fire D output" >> /etc/rc.local
-  echo "gpio -g write 17 0   # Fire A set to zero" >> /etc/rc.local
-  echo "gpio -g write 22 0   # Fire B set to zero" >> /etc/rc.local
-  echo "gpio -g write 23 0   # Fire C set to zero" >> /etc/rc.local
-  echo "gpio -g write 24 0   # Fire D set to zero" >> /etc/rc.local
-  echo "gpio -g mode 25 out   # Arm clock set to output" >> /etc/rc.local
-  echo "gpio -g write 25 0   # Arm clock set to zero" >> /etc/rc.local
   echo "gpio -g mode 16 out   # LED Shutdown Ack output" >> /etc/rc.local
-  echo "gpio -g mode 6 out   # LED & Radio RF amplifier output" >> /etc/rc.local
-  echo "gpio -g write 16 0   # LED Shutdown Ack off" >> /etc/rc.local
-  echo "gpio -g write 6 0   # LED & Radio RF amplifier off" >> /etc/rc.local
-  echo "gpio -g write 21 1   # release GPS reset" >> /etc/rc.local
-  echo "gpio -g mode 5 in   # interrupt input" >> /etc/rc.local
-  echo "gpio mode 5 up   # interrupt input" >> /etc/rc.local
-  echo "gpio -g mode 12 in   # interrupt input" >> /etc/rc.local
-  echo "gpio mode 12 up   # interrupt input" >> /etc/rc.local
   echo "gpio mode 2 up   # i2c input/output" >> /etc/rc.local
   echo "gpio mode 3 up   # i2c input/output" >> /etc/rc.local
-  echo "gpio mode 9 up   # SPI MISO input" >> /etc/rc.local
-  echo "gpio mode 20 up   # I2S input" >> /etc/rc.local
+  echo "gpio mode 26 up   # Halt request input" >> /etc/rc.local
   echo "exit 0" >> /etc/rc.local
   echo "TinkerTech1 Setup: High current/GPS/RF/LED setup added to rc.local" >> $logFilePath
 fi
@@ -431,23 +376,13 @@ echo "TinkerTech1 Setup: apt-get -y install python-smbus python3-smbus build-ess
 #
 #
 #
-# Install I2C tools    already in 2.8.2
-#echo "TinkerTech1 Setup: Starting i2c-tools setup" >> $logFilePath
-#apt-get -y install i2c-tools
-#echo "TinkerTech1 Setup: apt-get install i2c-tools: result" $? >> $logFilePath
-#
-#
-# To view serial data for GPS
+# To view serial data
 # to use:
-#    screen /dev/ttyAMA0 9600
+#    screen /dev/ttyS0 <baud rate>
 apt-get -y install screen
 echo "TinkerTech1 Setup: apt-get -y install screen: result" $? >> $logFilePath
 #
 #
-#
-#  GPS format conversion tool
-apt-get -y install gpsbabel
-echo "TinkerTech1 Setup: apt-get -y install gpsbabel: result" $? >> $logFilePath
 #
 #
 # setserial serial port configuration/reporting utility
@@ -505,7 +440,7 @@ echo ""
 # enable SW4 to do shutdown
 /usr/local/bin/gpio-halt $HALTGPIOBIT &
 tput setaf 5        # highlight text magenta
-echo "You must re-boot for the changes to take effect, you can use button SW4 for this now. Remember to set country, time zone and enable i2c and spi in preferences."
+echo "You must re-boot for the changes to take effect, you can use button SW4 for this now. Remember to set country, time zone and enable i2c in preferences."
 tput setaf 7        # back to normal
 echo "Install complete " $(date +"%A,  %B %e, %Y, %X %Z") >> $runlogFilePath
 

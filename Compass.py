@@ -161,8 +161,7 @@ draw.text((91, bottom/2-3), 'E', font=font, fill=255)
 ################
 theta=0
 while (True):
-    #theta = theta + 3.14159/12.0
-    theta = float(subprocess.check_output(["python3", "magnatometer.py" ]))+3.14159265
+    theta = 3.14159/180*float(subprocess.check_output(["python3", "magnatometer.py" ]))+3.14159265
 
     newArrowPoints = Theta2ArrowPoints(theta)
 
