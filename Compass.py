@@ -1,20 +1,31 @@
 #!/usr/bin/env python2
 #
 # Compass demo for TinkerTech Raspberry Pi class
+#
+#
+# Written: 9/30/2018
+#    Rev.: 1.00
+#      By: Robert S. Rau & Rob F. Rau II
+#  Source: Modified from example
+#
+# Updated: 
+#    Rev.: 1.01
+#      By: Robert S. Rau & Rob F. Rau II
+# Changes: Folded magnetometer read into loop
 
-print "I started"
+#print "I started"
 import sys, getopt
 #sys.path.append('.')
-#import time
+from time import sleep
 from math import sin, cos
-import Adafruit_SSD1306
-import subprocess
-import RTIMU
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
+import Adafruit_SSD1306        # for OLED
+import subprocess  # needed?
+import RTIMU                   # for magnetometer
+from PIL import Image          # for OLED
+from PIL import ImageDraw      # for OLED
+from PIL import ImageFont      # for OLED
 
-print " imported"
+#print "I imported libraries"
 OLEDHeight=64
 OLEDWidth=128
 
@@ -28,12 +39,17 @@ SETTINGS_FILE = "RTIMULib"
 
 s = RTIMU.Settings(SETTINGS_FILE)
 imu = RTIMU.RTIMU(s)
+
 imu.IMUInit()
-imu.setSlerpPower(0.02)
-imu.setGyroEnable(False)
-imu.setAccelEnable(False)
+
+# Slerp power controls the fusion and can be between 0 and 1
+# 0 means that only gyros are used, 1 means that only accels/compass are used
+# In-between gives the fusion mix.
+imu.setSlerpPower(0.4)
+imu.setGyroEnable(True)
+imu.setAccelEnable(True)
 imu.setCompassEnable(True)
-print "I inited"
+#print "I initialized the IMU"
 
 
 class ArrowPoints:
@@ -169,29 +185,34 @@ draw.text((91, bottom/2-3), 'E', font=font, fill=255)
 
 yawoff = 0    #  Y offset in radians
 
+TotalOffset = -yawoff + (magnetic_deviation*3.141592/180)
 ################
 # Loop
 ################
-theta=0
+
 while (True):
+#    imu.IMUInit()
+#    imu.setSlerpPower(0.1)
+#    imu.setGyroEnable(True)
+#    imu.setAccelEnable(True)
+#    imu.setCompassEnable(True)
+#    sleep (0.3)
     if imu.IMURead():
         data = imu.getIMUData()
         fusionPose = data["fusionPose"]
-        theta = (fusionPose[2]) - yawoff + (magnetic_deviation*3.141592/180)
-#    theta = 3.14159/180*float(subprocess.check_output(["python3", "magnatometer.py" ]))+3.14159265
+        theta = (fusionPose[2]) + TotalOffset
 
         newArrowPoints = Theta2ArrowPoints(theta)
-
         newOledCoords = CenterCoord2OLEDCoord(newArrowPoints)
 
         eraseOldOledCoords(oldOledCoords)
         drawOledCoords(newOledCoords)
 
-#    newArrowPoints = Theta2ArrowPoints(theta)
-#    newOledCoords = CenterCoord2OLEDCoord(newArrowPoints)
-
         oldOledCoords.assign(newOledCoords)
 
-    # Display image.
+# Display image.
         disp.image(image)
         disp.display()
+        print "updated"
+    else:
+        print "No new reading available"
