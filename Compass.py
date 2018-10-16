@@ -50,7 +50,8 @@ imu.setGyroEnable(True)
 imu.setAccelEnable(True)
 imu.setCompassEnable(True)
 #print "I initialized the IMU"
-
+poll_interval = imu.IMUGetPollInterval()
+print poll_interval
 
 class ArrowPoints:
     def __init__(self,ArrowEndX,ArrowEndY,TailEndX,TailEndY,ArrowLeftX,ArrowLeftY,ArrowRightX,ArrowRightY):
@@ -201,7 +202,7 @@ while (True):
         data = imu.getIMUData()
         fusionPose = data["fusionPose"]
         theta = (fusionPose[2]) + TotalOffset
-
+        print theta
         newArrowPoints = Theta2ArrowPoints(theta)
         newOledCoords = CenterCoord2OLEDCoord(newArrowPoints)
 
@@ -213,6 +214,6 @@ while (True):
 # Display image.
         disp.image(image)
         disp.display()
-        print "updated"
+
     else:
         print "No new reading available"
