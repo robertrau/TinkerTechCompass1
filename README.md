@@ -2,7 +2,7 @@
 Bash script for Raspberry Pi Zero an d TinkerTech board Compass.
 
 
-![alt text](https://github.com/robertrau/TinkerTechCompass/raw/master/pictures/TinkerTechBoard1.png "figure 1")
+![alt text](https://github.com/robertrau/TinkerTechCompass1/blob/master/TinkerTechBoard1.png "figure 1")
 
 
 
