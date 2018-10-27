@@ -198,6 +198,13 @@ while (True):
 #    imu.setAccelEnable(True)
 #    imu.setCompassEnable(True)
 #    sleep (0.3)
+    imu = RTIMU.RTIMU(s)
+    imu.IMUInit()
+    imu.setSlerpPower(0.4)
+    imu.setGyroEnable(True)
+    imu.setAccelEnable(True)
+    imu.setCompassEnable(True)
+    sleep (0.1)
     if imu.IMURead():
         data = imu.getIMUData()
         fusionPose = data["fusionPose"]
