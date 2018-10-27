@@ -11,15 +11,19 @@
 # Updated: 
 #    Rev.: 1.01
 #      By: Robert S. Rau & Rob F. Rau II
-# Changes: Folded magnetometer read into loop
-
+# Changes: Folded magnetometer lib & init into loop
+#
+# Updated: 10/27/2018
+#    Rev.: 1.01
+#      By: Robert S. Rau & Rob F. Rau II
+# Changes: Display compass points before entry into loop, added dummy read
+#
+#
+#
 #print "I started"
-import sys, getopt
-#sys.path.append('.')
-from time import sleep
-from math import sin, cos
+from time import sleep         # for delays for imu to collect enough data for sensor fusion
+from math import sin, cos      # for compass arrow rotation
 import Adafruit_SSD1306        # for OLED
-import subprocess  # needed?
 import RTIMU                   # for magnetometer
 from PIL import Image          # for OLED
 from PIL import ImageDraw      # for OLED
@@ -50,8 +54,6 @@ imu.setGyroEnable(True)
 imu.setAccelEnable(True)
 imu.setCompassEnable(True)
 #print "I initialized the IMU"
-poll_interval = imu.IMUGetPollInterval()
-print poll_interval
 
 class ArrowPoints:
     def __init__(self,ArrowEndX,ArrowEndY,TailEndX,TailEndY,ArrowLeftX,ArrowLeftY,ArrowRightX,ArrowRightY):
@@ -183,6 +185,8 @@ draw.text((width/2-2, -3),    'N',  font=font, fill=255)
 draw.text((width/2-2, bottom-7), 'S', font=font, fill=255)
 draw.text((30, bottom/2-3), 'W', font=font, fill=255)
 draw.text((91, bottom/2-3), 'E', font=font, fill=255)
+disp.image(image)
+disp.display()
 
 yawoff = 0    #  Y offset in radians
 
@@ -192,24 +196,20 @@ TotalOffset = -yawoff + (magnetic_deviation*3.141592/180)
 ################
 
 while (True):
-#    imu.IMUInit()
-#    imu.setSlerpPower(0.1)
-#    imu.setGyroEnable(True)
-#    imu.setAccelEnable(True)
-#    imu.setCompassEnable(True)
-#    sleep (0.3)
     imu = RTIMU.RTIMU(s)
     imu.IMUInit()
-    imu.setSlerpPower(0.4)
+    imu.setSlerpPower(0.8)
     imu.setGyroEnable(True)
     imu.setAccelEnable(True)
     imu.setCompassEnable(True)
-    sleep (0.1)
+    sleep (0.08)
+    imu.IMURead()
+    sleep (0.08)
     if imu.IMURead():
         data = imu.getIMUData()
         fusionPose = data["fusionPose"]
         theta = (fusionPose[2]) + TotalOffset
-        print theta
+        #print theta
         newArrowPoints = Theta2ArrowPoints(theta)
         newOledCoords = CenterCoord2OLEDCoord(newArrowPoints)
 

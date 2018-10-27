@@ -16,9 +16,14 @@
 #      By: Robert S. Rau & Rob F. Rau II
 # Changes: Cleaned up GPIO setup in rc.local. Removed GPS stuff.
 #
+# Updated: 
+#    Rev.: 1.03
+#      By: Robert S. Rau & Rob F. Rau II
+# Changes: Added OLED setup
 #
 #
-TINKERTECH1SETUPVERSION=1.02
+#
+TINKERTECH1SETUPVERSION=1.03
 #
 #
 #
@@ -27,12 +32,11 @@ TINKERTECH1SETUPVERSION=1.02
 # 1) Setup directory structure
 # 2) Set up Raspberry Pi configuration
 # 3) install RF transmitters and modulators
-# 4) install audio support
-# 5) Graphics for Video downlink support
-# 6) High current/GPS/RF/LED output support
+# 4) OLED
+# 5) Graphics
+# 6) GPIO
 # 7) IMU (MPS9250) support
-# 8) RTC support
-# 9) Developer tools
+# 8) Developer tools
 #
 #
 #
@@ -260,7 +264,10 @@ chmod +x pkt2wave
 chown pi:pi pkt2wave     # because when this script is run with sudo, everything belongs to root
 #
 #
+########## 4) OLED display
 #
+python -m pip install --upgrade pip setuptools wheel
+pip install Adafruit-SSD1306
 #
 #
 ########## 5) Graphics
@@ -361,7 +368,7 @@ cp /home/pi/tinkertech/RTIMULib.ini /home/pi/tinkertech/RTIMULib2/Linux/build/RT
 #
 #
 #
-########## 9) Developer tools
+########## 8) Developer tools
 #
 # Screen capture tool
 echo "TinkerTech1 Setup: Starting scrot setup" >> $logFilePath
@@ -440,7 +447,10 @@ echo ""
 # enable SW4 to do shutdown
 /usr/local/bin/gpio-halt $HALTGPIOBIT &
 tput setaf 5        # highlight text magenta
-echo "You must re-boot for the changes to take effect, you can use button SW4 for this now. Remember to set country, time zone and enable i2c in preferences."
+echo " "
+echo "Button SW4 will request a shutdown."
+echo "You must click on the raspberry, click on Preferences, then click on Raspberry Pi Configuration. From that window click the Interfaces tab and click SSH and I2C to Enable"
+echo "You can use i2cdetect -y 1 to see if your I2C devices are on the bus.  Re-boot for the changes to take effect."
 tput setaf 7        # back to normal
 echo "Install complete " $(date +"%A,  %B %e, %Y, %X %Z") >> $runlogFilePath
 
