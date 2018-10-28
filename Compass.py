@@ -18,6 +18,10 @@
 #      By: Robert S. Rau & Rob F. Rau II
 # Changes: Display compass points before entry into loop, added dummy read
 #
+# Updated: 10/28/2018
+#    Rev.: 1.02
+#      By: Robert S. Rau & Rob F. Rau II
+# Changes: flipped compass arrow rotation direction and added 90¡ bias
 #
 #
 #print "I started"
@@ -208,7 +212,7 @@ while (True):
     if imu.IMURead():
         data = imu.getIMUData()
         fusionPose = data["fusionPose"]
-        theta = (fusionPose[2]) + TotalOffset
+        theta = -((fusionPose[2]) + TotalOffset) + 3.141592/2
         #print theta
         newArrowPoints = Theta2ArrowPoints(theta)
         newOledCoords = CenterCoord2OLEDCoord(newArrowPoints)
