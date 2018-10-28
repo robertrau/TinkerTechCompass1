@@ -21,7 +21,7 @@
 # Updated: 10/28/2018
 #    Rev.: 1.02
 #      By: Robert S. Rau & Rob F. Rau II
-# Changes: flipped compass arrow rotation direction and added 90¡ bias
+# Changes: flipped compass arrow rotation direction and added 90 deg bias
 #
 #
 #print "I started"
